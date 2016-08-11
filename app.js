@@ -131,15 +131,15 @@ app.get('/user/:id', function(req, res){ // richiesta informazioni utente
     });
 });
 
-app.delete('/user/:id', function(req,res){
+app.delete('/user/:id', function(req,res){ //richiesta eliminazione utente
   var id = req.params.id;
   res.writeHead(200, {"Content-type": "text"});
   res.end("Delete " + id +" profile");
 });
 
-app.put('/user/:id', function(req, res){
+app.put('/user/:id', function(req, res){ //richiesta modifica utente
   var id = req.params.id;
-  res.writeHead(200, {"Content-type": "text"});
+  res.writeHead(200, {"Content-type": "text/JSON"});
   res.end("Update "+ id +" profile");
 });
 
