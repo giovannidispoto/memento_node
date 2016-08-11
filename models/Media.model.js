@@ -11,7 +11,7 @@ var mediaSchema = new mongoose.Schema({
     comments : [{ user_id: String, comment: String }]
 });
 
-mediaSchema.method.getPhotosUser = function(user_id, callback){
+mediaSchema.method.findPhotosByUser = function(user_id, callback){
     return this.model('media').find({user_id : user_id}, callback);
 }
 

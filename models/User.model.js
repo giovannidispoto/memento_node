@@ -1,11 +1,12 @@
 var mongoose = require('mongoose')
 , crypto = require('crypto')
 , ObjectId = mongoose.Schema.ObjectId
+, ObjId = mongoose.Types.ObjectId
 , salt = 'mementoauderesemper'
 , sha512 = crypto.createHmac('sha512', salt);
 
   var userSchema = new mongoose.Schema({
-     _id : ObjectId,
+     _id : String,
      name : String,
      surname: String,
      e_mail: String,
@@ -24,13 +25,13 @@ var mongoose = require('mongoose')
     return this.model('user').findOne({_id : user, password : password}, callback);
   }
    //funzione per ottenere tutti gli utenti
-  userSchema.methods.getUsers = function(callback){
+  userSchema.statics.findAll = function(callback){
     return this.model('user').find({}, callback);
   }
 
   //funzione per ottenere tutte le info di un utente
-  userSchema.methods.getUser = function(user_id, callback){
-    return this.model('user').find({_id : user_id}, callback);
+  userSchema.statics.findUser = function(user_id, callback){
+    return this.model('user').find({ _id : user_id }, callback);
   }
 
   userSchema.methods.changePassword = function(user_id, password ,callback){ //metodo per cambiare la password

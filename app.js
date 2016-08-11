@@ -12,8 +12,10 @@ var express = require('express')
 var app = module.exports = express.createServer();
 mongoose.connect("mongodb://localhost/memento");
 
-function auth(req, res, next){
-
+function isAuth(req, res, next){
+  var err = { error : "2"};
+  res.writeHead(500, {"Content-type":"text"});
+  res.end(JSON.stringify(err));
 }
 
 // Configuration
@@ -43,23 +45,52 @@ app.get('/', function(req,res){
   res.end();
 });
 
-app.get('/users', function(req, res){
 
-    user = new User();
+ /*
+  * Start User HTTP action
+ */
+ app.get('/user', function(req, res){
 
-    user.getUsers(function(err, users){
-      if(err) console.log("Error: " + err);
-      res.writeHead(200, {"Content-type": "text/JSON"});
-      res.write(JSON.stringify(users));
-      res.end();
-    })
-});
+     User.findAll(function(err, users){
+       if(err) console.log("Error: " + err);
+       res.writeHead(200, {"Content-type": "text/JSON"});
+       res.write(JSON.stringify(users));
+       res.end();
+     })
+ });
 
-app.get('/user/:id', function(req, res){
+app.get('/user/:id', function(req, res){ // richiesta informazioni utente
     var id = req.params.id;
     res.writeHead(200, {"Content-type": "text"});
-    res.end("Request "+ id +" profile");
+
+    User.findUser(id, function(err, user){
+        if(err) throw err;
+        res.write(JSON.stringify(user));
+        res.end();
+    });
 });
+
+app.post('/user/:id', function(req, res){
+  var id = req.params.id;
+  res.writeHead(200, {"Content-type": "text"});
+  res.end("Create"+ id +" profile");
+});
+
+app.delete('/user/:id', function(req,res){
+  var id = req.params.id;
+  res.writeHead(200, {"Content-type": "text"});
+  res.end("Delete " + id +" profile");
+});
+
+app.put('/user/:id', function(req, res){
+  var id = req.params.id;
+  res.writeHead(200, {"Content-type": "text"});
+  res.end("Update "+ id +" profile");
+});
+
+/*
+* END User HTTP Action
+*/
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
