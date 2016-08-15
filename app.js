@@ -7,15 +7,32 @@ var express = require('express')
   , routes = require('./routes')
   , mongoose = require('mongoose')
   , User = require('./models/User.model.js')
-  , Media = require('./models/Media.model.js');
+  , Media = require('./models/Media.model.js')
+  , uuid = require('node-uuid');
+
+const YEAR_MILLIS =  31556952000;
 
 var app = module.exports = express.createServer();
+
+mongoose.Promise = global.Promise
 mongoose.connect("mongodb://localhost/memento");
 
 function isAuth(req, res, next){
-  var err = { error : "2"};
+  var token = req.param("token");
+  var user_id = req.param("user_id");
+
+  User.isValidToken(user_id, token, function(err, result){
+      if(err) throw err;
+  });
+
   res.writeHead(500, {"Content-type":"text"});
-  res.end(JSON.stringify(err));
+  res.end(JSON.stringify({
+    result : "ERR",
+    error : {
+      code: 2,
+      errMsg: "you are not authenticated"
+    }
+  }));
 }
 
 // Configuration
@@ -62,12 +79,23 @@ app.post('/login', function(req, res){ //autenticazione
 
      user.auth(req.param("pass"), function(match){ //controllo che le password siano uguali
         if(match){
-          res.writeHead(200, {"Content-type": "text/JSON"});
-          res.write(JSON.stringify({
-            result : "OK",
-            error : 0
-          })); //do la risposta in JSON con codice 200: OK
-          res.end();
+             var token = uuid.v1();
+             var expire = ( new Date().getTime() + YEAR_MILLIS );
+            user.createSession(req.connection.remoteAddress,token,expire, null, function(err, user){
+              if(err) throw err;
+                res.writeHead(200, {"Content-type": "text/JSON"});
+                res.write(JSON.stringify({
+                  result : "OK",
+                  error : 0,
+                  session : {
+                    token : token,
+                    expire : expire
+                  }
+                })); //do la risposta in JSON con codice 200: OK
+                res.end();
+
+            });
+
         }else{
           res.writeHead(503, {"Content-type": "text/JSON"});
           res.write(JSON.stringify({
@@ -88,7 +116,8 @@ app.post('/login', function(req, res){ //autenticazione
  /*
   * Start User HTTP action
  */
- app.get('/user', function(req, res){
+
+ app.post('/user',isAuth, function(req, res){
 
      User.findAll(function(err, users){
        if(err) console.log("Error: " + err);

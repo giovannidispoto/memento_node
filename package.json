@@ -7,5 +7,6 @@
     , "jade": ">= 0.0.1"
     , "js-sha512": "*"
     , "mongoose": "*"
+    , "node-uuid": "*"
   }
 }
