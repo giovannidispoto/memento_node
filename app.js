@@ -8,32 +8,20 @@ var express = require('express')
   , mongoose = require('mongoose')
   , User = require('./models/User.model.js')
   , Media = require('./models/Media.model.js')
-  , uuid = require('node-uuid');
+  , uuid = require('node-uuid')
+  , AuthUser = require('./middleware/AuthUser')
+    middleAuth = new AuthUser();
 
 const YEAR_MILLIS =  31556952000;
 
 var app = module.exports = express.createServer();
 
 mongoose.Promise = global.Promise
+
+//Connect to MongoDB
+
 mongoose.connect("mongodb://localhost/memento");
 
-function isAuth(req, res, next){
-  var token = req.param("token");
-  var user_id = req.param("user_id");
-
-  User.isValidToken(user_id, token, function(err, result){
-      if(err) throw err;
-  });
-
-  res.writeHead(500, {"Content-type":"text"});
-  res.end(JSON.stringify({
-    result : "ERR",
-    error : {
-      code: 2,
-      errMsg: "you are not authenticated"
-    }
-  }));
-}
 
 // Configuration
 
@@ -54,7 +42,15 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
+//setting routes that don't need auth
+
+middleAuth.except(['/login', '/']);
+
 // Routes
+
+// Using middleware for checking authentication
+
+app.all('/*', middleAuth.check);
 
 app.get('/', function(req,res){
   res.writeHead(200, {"Content-type":"text/JSON"});
@@ -117,7 +113,7 @@ app.post('/login', function(req, res){ //autenticazione
   * Start User HTTP action
  */
 
- app.post('/user',isAuth, function(req, res){
+ app.post('/user', function(req, res){
 
      User.findAll(function(err, users){
        if(err) console.log("Error: " + err);
@@ -129,7 +125,7 @@ app.post('/login', function(req, res){ //autenticazione
 
  app.post('/user/', function(req, res){
 
-   var user = new User({ //creo nuovo utente
+   var user = new User({ //create new user
      _id : req.param("user_id"),
      name : req.param("name"),
      surname: req.param("surname"),
@@ -141,15 +137,20 @@ app.post('/login', function(req, res){ //autenticazione
    });
 
    console.log("Created new user: "+ user._id);
+
+
    res.writeHead(201, {"Content-type": "text"});
 
-     res.end(JSON.stringify({ //risposta
+     res.end(JSON.stringify({ //response
        result : "OK",
        error : 0
      }));
  });
+/*
+*    Request using information, passing user id
 
-app.get('/user/:id', function(req, res){ // richiesta informazioni utente
+*/
+app.get('/user/:id', function(req, res){
     var id = req.params.id;
     res.writeHead(200, {"Content-type": "text"});
 
@@ -160,13 +161,25 @@ app.get('/user/:id', function(req, res){ // richiesta informazioni utente
     });
 });
 
-app.delete('/user/:id', function(req,res){ //richiesta eliminazione utente
+/*
+
+* Request deleting user profile
+
+*/
+
+app.delete('/user/:id', function(req,res){
   var id = req.params.id;
   res.writeHead(200, {"Content-type": "text"});
   res.end("Delete " + id +" profile");
 });
 
-app.put('/user/:id', function(req, res){ //richiesta modifica utente
+/*
+
+* Request edit profile
+
+*/
+
+app.put('/user/:id', function(req, res){ /
   var id = req.params.id;
   res.writeHead(200, {"Content-type": "text/JSON"});
   res.end("Update "+ id +" profile");

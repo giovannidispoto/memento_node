@@ -56,11 +56,10 @@ var mongoose = require('mongoose')
 
   //controllo validità token
   userSchema.statics.isValidToken = function(user_id, token, callback){
-    return this.model('user').find(
-      { _id : user_id},
-      { sessions : { $elemMatch : {token : token}},
-      callback
-    );
+    return this.model('user')
+    .count({ _id : user_id})
+    .elemMatch("sessions", {"token" : token})
+    .exec(callback);
   }
 
   userSchema.methods.changePassword = function(user_id, password ,callback){ //metodo per cambiare la password
